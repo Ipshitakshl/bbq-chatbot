@@ -1,0 +1,90 @@
+from enum import Enum
+
+class BookingState(Enum):
+    START = 1
+    CHOOSE_ACTION = 2
+    CITY = 3
+    DATE = 4
+    GUESTS = 5
+    CONFIRM = 6
+    FAQ = 7
+    UPDATE = 8
+    CANCEL = 9
+    END = 10
+
+class ConversationManager:
+    def __init__(self):
+        self.state = BookingState.CHOOSE_ACTION
+        self.booking = {}
+
+    def handle_input(self, user_input: str):
+        user_input = user_input.strip().lower()
+        # State: Choose action
+        if self.state == BookingState.CHOOSE_ACTION:
+            if "book" in user_input:
+                self.state = BookingState.CITY
+                return "Which city would you like to book in? (Delhi/Bangalore)"
+            elif "faq" in user_input or "question" in user_input:
+                self.state = BookingState.FAQ
+                return "Please type your question about Barbeque Nation."
+            elif "update" in user_input:
+                self.state = BookingState.UPDATE
+                return "Please enter your booking ID to update your reservation."
+            elif "cancel" in user_input:
+                self.state = BookingState.CANCEL
+                return "Please enter your booking ID to cancel your reservation."
+            else:
+                return "Please type 'book' to make a reservation, 'faq' for questions, or 'update/cancel' to modify a booking."
+        # Booking flow
+        elif self.state == BookingState.CITY:
+            if user_input in ["delhi", "bangalore"]:
+                self.booking['city'] = user_input.title()
+                self.state = BookingState.DATE
+                return f"Great! What date do you want to book for {self.booking['city']}? (YYYY-MM-DD)"
+            else:
+                return "Please type either 'Delhi' or 'Bangalore'."
+        elif self.state == BookingState.DATE:
+            self.booking['date'] = user_input
+            self.state = BookingState.GUESTS
+            return "How many guests?"
+        elif self.state == BookingState.GUESTS:
+            self.booking['guests'] = user_input
+            self.state = BookingState.CONFIRM
+            return (f"Booking Summary:\nCity: {self.booking['city']}\n"
+                    f"Date: {self.booking['date']}\nGuests: {self.booking['guests']}\n"
+                    "Type 'yes' to confirm or 'no' to cancel.")
+        elif self.state == BookingState.CONFIRM:
+            if user_input == 'yes':
+                self.state = BookingState.END
+                return "Booking confirmed! 🎉 We'll send you a confirmation SMS."
+            else:
+                self.state = BookingState.CHOOSE_ACTION
+                return "Booking cancelled. Type 'book' to start over or 'faq' for questions."
+        # FAQ flow
+        elif self.state == BookingState.FAQ:
+            # Here you would connect to your knowledge base API
+            answer = self.answer_faq(user_input)
+            self.state = BookingState.CHOOSE_ACTION
+            return answer + "\n\nType 'book' to make a reservation or ask another question."
+        # Update/cancel flow (simplified)
+        elif self.state == BookingState.UPDATE:
+            self.state = BookingState.END
+            return f"Booking {user_input} updated! (This is a placeholder.)"
+        elif self.state == BookingState.CANCEL:
+            self.state = BookingState.END
+            return f"Booking {user_input} cancelled! (This is a placeholder.)"
+        elif self.state == BookingState.END:
+            self.state = BookingState.CHOOSE_ACTION
+            return "Is there anything else I can help you with? (Type 'book', 'faq', or 'update/cancel')"
+        else:
+            self.state = BookingState.CHOOSE_ACTION
+            return "Sorry, I didn't understand. Please type 'book', 'faq', or 'update/cancel'."
+
+    def answer_faq(self, question):
+        # Placeholder for real knowledge base lookup
+        if "timing" in question:
+            return "Barbeque Nation is open from 12 PM to 11 PM every day."
+        elif "menu" in question:
+            return "You can view our menu on the official Barbeque Nation website."
+        else:
+            return "Sorry, I don't know the answer to that. Please contact our support for more info."
